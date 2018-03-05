@@ -7,6 +7,7 @@ This project allows to manage the secrets of database (users, passwords, roles) 
 
 - [Version Vault](#version-vault)
 - [Creating the docker-compose file](#creating-the-docker-compose-file)
+- [Configure Environment](#Configure-Environment#)
 
 
 
@@ -53,4 +54,14 @@ run docker compose:
 
 ```bash
 docker-compose up -d
+```
+
+Configure Environment
+
+This command will create an alias and the vault address to the Docker container.
+
+```bash
+alias vault='docker exec -it vault-dev vault "$@"'
+
+export VAULT_ADDR=http://127.0.0.1:8200
 ```
