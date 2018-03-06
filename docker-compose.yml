@@ -1,0 +1,29 @@
+version: '2.0'
+services:
+
+# capa de diseno
+  vault:
+      container_name: vault-dev
+      hostname: vault-dev
+      image: vault:0.9.5
+      links:
+        - consul:consul
+      depends_on:
+        - consul
+      ports:
+        - 8200:8200
+      environment:
+        VAULT_ADDR: http://127.0.0.1:8200
+      volumes:
+        - ./config:/config
+      entrypoint: /config/init-vault.sh -t 30 -h consul -p 8500 -s -- vault server -config=/config/vault.conf
+
+  consul:
+      container_name: consul
+      image: consul:1.0.6
+      hostname: consul
+      command: "agent -dev -client 0.0.0.0"
+      ports:
+        - 8500:8500
+        - 8400:8400
+        - 8600:53/udp
