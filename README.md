@@ -7,7 +7,7 @@ This project allows to manage the secrets of database (users, passwords, roles) 
 
 - [Version Vault](#version-vault)
 - [Creating the docker-compose file](#creating-the-docker-compose-file)
-- [Configure environment](#Configure-environment)
+- [Configure environment](#configure-environment)
 - [initializing vault](#initializing-vault)
 - [Unsealing Vault](#Unsealing-Vault)
 - [Vault Tokens](#Vault-Tokens)
