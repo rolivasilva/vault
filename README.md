@@ -163,7 +163,7 @@ Success! Enabled the mysql secrets engine at: mysql/
 ## MySQL Conection Database
 
 ```bash
-$ vault write -address=${VAULT_ADDR} mysql/config/connection connection_url="root:zIeYwEM4F1J8t0t@tcp(192.168.1.56:3306)/"
+$ vault write -address=${VAULT_ADDR} mysql/config/connection connection_url="root:rootpw@tcp(127.0.0.1:3306)/"
 WARNING! The following warnings were returned from Vault:
 
   * Read access to this endpoint should be controlled via ACLs as it will
