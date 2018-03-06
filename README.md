@@ -9,9 +9,9 @@ This project allows to manage the secrets of database (users, passwords, roles) 
 - [Creating the docker-compose file](#creating-the-docker-compose-file)
 - [Configure environment](#configure-environment)
 - [initializing vault](#initializing-vault)
-- [Unsealing Vault](#Unsealing-Vault)
-- [Vault Tokens](#Vault-Tokens)
-- [The mysql secret backend](#The-mysql-secret-backend)
+- [Unsealing Vault](#unsealing-vault)
+- [Vault Tokens](#vault-tokens)
+- [The mysql secret backend](#the-mysql-secret-backend)
 
 ## Version Vault
 
