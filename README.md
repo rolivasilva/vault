@@ -2,10 +2,10 @@
 
 This project allows to manage the secrets of database (users, passwords, roles) with `vault` and `consul` as [secret backend](https://www.vaultproject.io/docs/secrets/consul/).
 
-
 ---------
 
 - [Version Vault](#version-vault)
+- [File Configuration Vault](#file-onfiguration-vault)
 - [Creating the docker-compose file](#creating-the-docker-compose-file)
 - [Configure environment](#configure-environment)
 - [initializing vault](#initializing-vault)
@@ -19,6 +19,26 @@ The versions used for the implementation of the project were
 
 - `vault v:0.9.5`  [repos docker](https://hub.docker.com/_/vault/).
 - `consult v:1.0.6` [repos docker](https://hub.docker.com/_/consul/).
+
+## File Configuration Vault
+
+- File `vault.hcl`
+
+```bash
+backend "consul" {
+  address = "consul:8500"
+  advertise_addr = "http://consul:8300"
+  path = "vault"
+  scheme = "http"
+}
+
+listener "tcp" {
+  address = "0.0.0.0:8200"
+  tls_disable = 1
+}
+disable_mlock = true
+
+````
 
 ## Creating the docker-compose file
 
