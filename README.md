@@ -1,24 +1,32 @@
 # Managing your MySQL Database Secrets with Vault over docker
 
-This project allows to manage the secrets of database (users, passwords, roles) with `vault` and `consul` as [secret backend](https://www.vaultproject.io/docs/secrets/consul/).
+Vault is a powerful tool for managing secrets, allows to protect, store and control tokens, passwords, certificates and other important secrets in our technological age. This project is a guide to manage the secrets database (conections, users, passwords, roles) with `vault` and `consul` as [secret backend](https://www.vaultproject.io/docs/secrets/consul/).
 
 ---------
 
+# Summary
+
+
 - [Version Vault](#version-vault)
 - [File Configuration Vault](#file-onfiguration-vault)
-- [Creating the docker-compose file](#creating-the-docker-compose-file)
+- [Docker Containers](#docker-containers)
+  - [Creating the docker-compose file](#creating-the-docker-compose-file)
 - [Configure environment](#configure-environment)
 - [initializing vault](#initializing-vault)
 - [Unsealing Vault](#unsealing-vault)
 - [Vault Tokens](#vault-tokens)
 - [The mysql secret backend](#the-mysql-secret-backend)
 
+---------
+
 ## Version Vault
 
-The versions used for the implementation of the project were
+Versions of Vault and consul used from the `docker` repositories, (would have to certify for some other version if some command is not deprecated)
 
 - `vault v:0.9.5`  [repos docker](https://hub.docker.com/_/vault/).
 - `consult v:1.0.6` [repos docker](https://hub.docker.com/_/consul/).
+
+--
 
 ## File Configuration Vault
 
