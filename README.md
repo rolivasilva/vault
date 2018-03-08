@@ -9,12 +9,11 @@ Vault is a powerful tool for managing secrets, allows to protect, store and cont
 
 - [Version Vault](#version-vault)
 - [File Configuration Vault](#file-onfiguration-vault)
-- [Docker Containers](#docker-containers)
-  - [Creating the docker-compose file](#creating-the-docker-compose-file)
+- [Creating the docker-compose file](#creating-the-docker-compose-file)
 - [Configure environment](#configure-environment)
 - [initializing vault](#initializing-vault)
 - [Unsealing Vault](#unsealing-vault)
-- [Vault Tokens](#vault-tokens)
+- [Vault Tokens Login](#vault-tokens-login)
 - [The mysql secret backend](#the-mysql-secret-backend)
 
 ---------
@@ -108,13 +107,13 @@ $ docker-compose up -d
 
 ## Configure environment
 
-Create an alias to run the`vault` commands during the implementation of the guide.
+Create an alias to run the `vault` commands during the implementation of the guide.
 
 ```bash
 $ alias vault='docker exec -it vault-dev vault "$@"'
 ````
 
-export VAULT_ADDR to environment variables
+export `VAULT_ADDR` to environment variables
 
 ```bash
 $ export VAULT_ADDR=http://127.0.0.1:8200
@@ -122,7 +121,7 @@ $ export VAULT_ADDR=http://127.0.0.1:8200
 
 ## Initializing vault
 
-
+The first step is to initialize the vault using the operator init command.
 
 ```bash
 $ vault operator init -address=${VAULT_ADDR} -key-shares=5 -key-threshold=2 > keys.txt
@@ -148,6 +147,8 @@ existing unseal keys shares. See "vault rekey" for more information.
 ```
 
 ## Unsealing Vault
+
+To unseal the vault server need access to two of the five keys defined when the vault was initialised. The following command unseal.
 
 ```bash
 $ vault operator unseal -address=${VAULT_ADDR} $(grep 'Key 1:' keys.txt | awk '{print $NF}')
@@ -187,7 +188,9 @@ HA Mode         active
 
 ```
 
-## Vault Tokens
+## Vault Tokens login
+
+Use the token to login to `vault` when the vault was initialised.
 
 ```bash
 $ export VAULT_TOKEN=$(grep 'Initial Root Token:' keys.txt | awk '{print substr($NF, 1, length($NF)-1)}')
@@ -208,12 +211,14 @@ token_policies     [root]
 
 ## The mysql secret backend
 
+Enable `MySQL` secret whith `secret enable` options
+
 ```bash
 $ vault secrets enable -address=${VAULT_ADDR} mysql
 Success! Enabled the mysql secrets engine at: mysql/
 ```
 
-## MySQL Conection Database
+write connection to database
 
 ```bash
 $ vault write -address=${VAULT_ADDR} mysql/config/connection connection_url="root:rootpw@tcp(127.0.0.1:3306)/"
@@ -222,7 +227,7 @@ WARNING! The following warnings were returned from Vault:
   * Read access to this endpoint should be controlled via ACLs as it will
   return the connection URL as it is, including passwords, if any.
 
-```
+````
 
 Write user readonly
 
@@ -230,7 +235,7 @@ Write user readonly
 $ vault write -address=${VAULT_ADDR} mysql/roles/readonly sql="CREATE USER '{{name}}'@'%' IDENTIFIED BY '{{password}}';GRANT SELECT ON *.* TO '{{name}}'@'%';"
   Success! Data written to: mysql/roles/readonly
 
-```
+````
 
 Read user readonly credentials
 
@@ -244,7 +249,9 @@ lease_renewable    true
 password           92f634a3-8a9e-245a-722e-f486b364f424
 username           read-root-02f989
 
-```  
+````  
+
+Read Credentials from API
 
 ```bash
 $ curl -s -H  "X-Vault-Token:$VAULT_TOKEN"  -XGET http://127.0.0.1:8200/v1/mysql/creds/readonly
