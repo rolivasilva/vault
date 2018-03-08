@@ -100,7 +100,7 @@ networks:
 
 ```
 
-run docker compose:
+Once the `docker-compose` file is created, we proceed to initialize the containers:
 
 ```bash
 $ docker-compose up -d
@@ -108,15 +108,20 @@ $ docker-compose up -d
 
 ## Configure environment
 
-This command will create an alias and the vault address to the Docker container.
+Create an alias to run the`vault` commands during the implementation of the guide.
 
 ```bash
 $ alias vault='docker exec -it vault-dev vault "$@"'
+````
 
+export VAULT_ADDR to environment variables
+
+```bash
 $ export VAULT_ADDR=http://127.0.0.1:8200
 ```
 
 ## Initializing vault
+
 
 
 ```bash
