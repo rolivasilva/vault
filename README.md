@@ -30,7 +30,7 @@ Versions of `Vault` and `Consul` used from the `docker` repositories, (would hav
 
 ## File Configuration Vault
 
-- File `vault.hcl`
+- The configuration file `vault.hcl` is located in `/config`, the file extension is .hcl, where the listerner and backend are configured
 
 ```bash
 backend "consul" {
@@ -50,34 +50,54 @@ disable_mlock = true
 
 ## Creating the docker-compose file
 
-docker.compose.yml:
+The `docker.compose.yml` is located in the root of project, same contains the configuration of the containers `vault` and `consul`
 
 ```bash
-version: '2.0'
+version: '3.0'
 services:
-
-  config:
-      container_name: config
-      build: ./
-      volumes:
-        - /config
 
   vault:
       container_name: vault-dev
+      hostname: vault
       image: vault:0.9.5
+      restart: always
+      networks:
+        - vault
       links:
         - consul:consul
+      depends_on:
+        - consul
       ports:
         - 8200:8200
-      volumes_from:
-        - config
-      command: vault server -config=/config/vault.conf
+      environment:
+        VAULT_ADDR: http://127.0.0.1:8200
+      volumes:
+        - ./config:/config
+        - ./policies:/policies
+      entrypoint: /config/init-vault.sh -t 30 -h consul -p 8500 -s -- vault server -config=/config/vault.hcl
 
   consul:
       container_name: consul
       image: consul:1.0.6
+      restart: always
+      hostname: consul
+      networks:
+        - vault
+      command: "agent -dev -client 0.0.0.0"
       ports:
         - 8500:8500
+        - 8400:8400
+        - 8600:53/udp
+
+networks:
+  vault:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.16.230.0/24
+        gateway: 172.16.230.1
+
 ```
 
 run docker compose:
