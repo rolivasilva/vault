@@ -1,11 +1,13 @@
-version: '2.0'
+version: '3.0'
 services:
 
-# capa de diseno
   vault:
       container_name: vault-dev
-      hostname: vault-dev
+      hostname: vault
       image: vault:0.9.5
+      restart: always
+      networks:
+        - vault
       links:
         - consul:consul
       depends_on:
@@ -16,14 +18,27 @@ services:
         VAULT_ADDR: http://127.0.0.1:8200
       volumes:
         - ./config:/config
-      entrypoint: /config/init-vault.sh -t 30 -h consul -p 8500 -s -- vault server -config=/config/vault.conf
+        - ./policies:/policies
+      entrypoint: /config/init-vault.sh -t 30 -h consul -p 8500 -s -- vault server -config=/config/vault.hcl
 
   consul:
       container_name: consul
       image: consul:1.0.6
+      restart: always
       hostname: consul
+      networks:
+        - vault
       command: "agent -dev -client 0.0.0.0"
       ports:
         - 8500:8500
         - 8400:8400
         - 8600:53/udp
+
+networks:
+  vault:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.16.230.0/24
+        gateway: 172.16.230.1

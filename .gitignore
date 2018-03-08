@@ -1,1 +1,5 @@
 keys.txt
+
+box/*
+
+.gitignore
