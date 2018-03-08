@@ -1,58 +1,105 @@
 # Managing your MySQL Database Secrets with Vault over docker
 
-This project allows to manage the secrets of database (users, passwords, roles) with `vault` and `consul` as [secret backend](https://www.vaultproject.io/docs/secrets/consul/).
-
+Vault is a powerful tool for managing secrets, allows to protect, store and control any tokens, passwords, certificates and other important secrets in our technological age. This project is a guide to manage the secrets database (conections, users, passwords, roles) with `vault` and `consul` as [secret backend](https://www.vaultproject.io/docs/secrets/consul/).
 
 ---------
 
+# Summary
+
+
 - [Version Vault](#version-vault)
+- [File Configuration Vault](#file-onfiguration-vault)
 - [Creating the docker-compose file](#creating-the-docker-compose-file)
 - [Configure environment](#configure-environment)
 - [initializing vault](#initializing-vault)
 - [Unsealing Vault](#unsealing-vault)
-- [Vault Tokens](#vault-tokens)
+- [Vault Tokens Login](#vault-tokens-login)
 - [The mysql secret backend](#the-mysql-secret-backend)
+
+---------
 
 ## Version Vault
 
-The versions used for the implementation of the project were
+Versions of `Vault` and `Consul` used from the `docker` repositories, (would have to certify for some other version if some command is not deprecated)
 
 - `vault v:0.9.5`  [repos docker](https://hub.docker.com/_/vault/).
 - `consult v:1.0.6` [repos docker](https://hub.docker.com/_/consul/).
 
-## Creating the docker-compose file
+---
 
-docker.compose.yml:
+## File Configuration Vault
+
+- The configuration file `vault.hcl` is located in `/config`, the file extension is .hcl, where the listerner and backend are configured
 
 ```bash
-version: '2.0'
-services:
+backend "consul" {
+  address = "consul:8500"
+  advertise_addr = "http://consul:8300"
+  path = "vault"
+  scheme = "http"
+}
 
-  config:
-      container_name: config
-      build: ./
-      volumes:
-        - /config
+listener "tcp" {
+  address = "0.0.0.0:8200"
+  tls_disable = 1
+}
+disable_mlock = true
+
+````
+
+## Creating the docker-compose file
+
+The `docker.compose.yml` is located in the root of project, same contains the configuration of the containers `vault` and `consul`
+
+```bash
+version: '3.0'
+services:
 
   vault:
       container_name: vault-dev
+      hostname: vault
       image: vault:0.9.5
+      restart: always
+      networks:
+        - vault
       links:
         - consul:consul
+      depends_on:
+        - consul
       ports:
         - 8200:8200
-      volumes_from:
-        - config
-      command: vault server -config=/config/vault.conf
+      environment:
+        VAULT_ADDR: http://127.0.0.1:8200
+      volumes:
+        - ./config:/config
+        - ./policies:/policies
+      entrypoint: /config/init-vault.sh -t 30 -h consul -p 8500 -s -- vault server -config=/config/vault.hcl
 
   consul:
       container_name: consul
       image: consul:1.0.6
+      restart: always
+      hostname: consul
+      networks:
+        - vault
+      command: "agent -dev -client 0.0.0.0"
       ports:
         - 8500:8500
+        - 8400:8400
+        - 8600:53/udp
+
+networks:
+  vault:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.16.230.0/24
+        gateway: 172.16.230.1
+
 ```
 
-run docker compose:
+Once the `docker-compose` file is created, we proceed to initialize the containers:
 
 ```bash
 $ docker-compose up -d
@@ -60,16 +107,21 @@ $ docker-compose up -d
 
 ## Configure environment
 
-This command will create an alias and the vault address to the Docker container.
+Create an alias to run the `vault` commands during the implementation of the guide.
 
 ```bash
 $ alias vault='docker exec -it vault-dev vault "$@"'
+````
 
+export `VAULT_ADDR` to environment variables
+
+```bash
 $ export VAULT_ADDR=http://127.0.0.1:8200
 ```
 
 ## Initializing vault
 
+The first step is to initialize the vault using the operator init command.
 
 ```bash
 $ vault operator init -address=${VAULT_ADDR} -key-shares=5 -key-threshold=2 > keys.txt
@@ -95,6 +147,8 @@ existing unseal keys shares. See "vault rekey" for more information.
 ```
 
 ## Unsealing Vault
+
+To unseal the vault server need access to two of the five keys defined when the vault was initialised. The following command unseal.
 
 ```bash
 $ vault operator unseal -address=${VAULT_ADDR} $(grep 'Key 1:' keys.txt | awk '{print $NF}')
@@ -134,7 +188,9 @@ HA Mode         active
 
 ```
 
-## Vault Tokens
+## Vault Tokens login
+
+Use the token to login to `vault` when the vault was initialised.
 
 ```bash
 $ export VAULT_TOKEN=$(grep 'Initial Root Token:' keys.txt | awk '{print substr($NF, 1, length($NF)-1)}')
@@ -155,21 +211,23 @@ token_policies     [root]
 
 ## The mysql secret backend
 
+Enable `MySQL` secret whith `secret enable` options
+
 ```bash
 $ vault secrets enable -address=${VAULT_ADDR} mysql
 Success! Enabled the mysql secrets engine at: mysql/
 ```
 
-## MySQL Conection Database
+write connection to database
 
 ```bash
-$ vault write -address=${VAULT_ADDR} mysql/config/connection connection_url="root:zIeYwEM4F1J8t0t@tcp(192.168.1.56:3306)/"
+$ vault write -address=${VAULT_ADDR} mysql/config/connection connection_url="root:rootpw@tcp(127.0.0.1:3306)/"
 WARNING! The following warnings were returned from Vault:
 
   * Read access to this endpoint should be controlled via ACLs as it will
   return the connection URL as it is, including passwords, if any.
 
-```
+````
 
 Write user readonly
 
@@ -177,7 +235,7 @@ Write user readonly
 $ vault write -address=${VAULT_ADDR} mysql/roles/readonly sql="CREATE USER '{{name}}'@'%' IDENTIFIED BY '{{password}}';GRANT SELECT ON *.* TO '{{name}}'@'%';"
   Success! Data written to: mysql/roles/readonly
 
-```
+````
 
 Read user readonly credentials
 
@@ -191,7 +249,9 @@ lease_renewable    true
 password           92f634a3-8a9e-245a-722e-f486b364f424
 username           read-root-02f989
 
-```  
+````  
+
+Read Credentials from API
 
 ```bash
 $ curl -s -H  "X-Vault-Token:$VAULT_TOKEN"  -XGET http://127.0.0.1:8200/v1/mysql/creds/readonly
